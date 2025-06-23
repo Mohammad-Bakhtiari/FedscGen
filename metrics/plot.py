@@ -177,8 +177,35 @@ def read_tuning_res(data_dir):
     scGen.Dataset = scGen.Dataset.apply(lambda x: DS_MAP[x])
     dataset_keys = df['Dataset'].unique().tolist()
     find_best_round_epoch(dataset_keys, copy.deepcopy(df), metric_keys, scGen)
+    best_csv_path = os.path.join(data_dir, "best_performance_summary.csv")
+    save_best_epoch_round_performance(df, scGen, dataset_keys, metric_keys, best_csv_path)
 
     plot_tuning_heatmap(dataset_keys, df, metric_keys, plot_name, scGen)
+
+def save_best_epoch_round_performance(df, scGen, dataset_keys, metric_keys, output_path):
+    records = []
+    for dataset in dataset_keys:
+        data = df[df['Dataset'] == dataset]
+        scgen_row = scGen[scGen["Dataset"] == dataset]
+        for metric in metric_keys:
+            # Calculate performance difference
+            data_diff = data.copy()
+            data_diff[metric] = data[metric] - scgen_row[metric].values[0]
+
+            # Identify best performance (maximum difference)
+            best_row = data_diff.loc[data_diff[metric].idxmax()]
+            records.append({
+                "Dataset": dataset,
+                "Metric": metric,
+                "Best_Round": int(best_row["Round"]),
+                "Best_Epoch": int(best_row["Epoch"]),
+                "Performance_Diff": round(best_row[metric], 4)
+            })
+
+    best_df = pd.DataFrame(records)
+    best_df.to_csv(output_path, index=False)
+    print(f"Saved best (round, epoch) performance differences to {output_path}")
+
 
 
 def find_best_round_epoch(dataset_keys, df, metric_keys, scGen):
