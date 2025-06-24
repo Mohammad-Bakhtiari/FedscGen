@@ -191,7 +191,6 @@ def save_best_epoch_round_performance(df, scGen, dataset_keys, metric_keys, outp
             # Calculate performance difference
             data_diff = data.copy()
             data_diff[metric] = data[metric] - scgen_row[metric].values[0]
-
             # Identify best performance (maximum difference)
             best_row = data_diff.loc[data_diff[metric].idxmax()]
             records.append({
@@ -201,7 +200,6 @@ def save_best_epoch_round_performance(df, scGen, dataset_keys, metric_keys, outp
                 "Best_Epoch": int(best_row["Epoch"]),
                 "Performance_Diff": round(best_row[metric], 4)
             })
-
     best_df = pd.DataFrame(records)
     best_df.to_csv(output_path, index=False)
     print(f"Saved best (round, epoch) performance differences to {output_path}")

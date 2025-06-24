@@ -34,8 +34,7 @@ echo "Running kbet for corrected data by scGen and FedscGen on HumanPancreas bat
 
 
 cd "${root_dir}/metrics"
-python plot.py --scenario "batchout" \
-  --data_dir "${root_dir}/results"
+python plot.py --scenario "batchout" --data_dir "${root_dir}/results"
 
 python plot.py --scenario "scenarios" --data_dir "${root_dir}/results"
 python plot.py --scenarios "datasets" --data_dir "${root_dir}/results"
