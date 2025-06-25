@@ -45,7 +45,6 @@ def dominant_plain(clients, cell_types, cell_key):
 
 def dominant_smpc(clients, cell_types, cell_key):
     """Return dominant batches using CrypTen for secure aggregation, preserving privacy."""
-    n_clients = len(clients)
     print("\n🔐 SMPC: Encrypting counts...")
     dominant = {f"client_{i}": [] for i in range(len(clients))}
     counts = _count_cells(clients, cell_types, cell_key)
@@ -61,7 +60,7 @@ def dominant_smpc(clients, cell_types, cell_key):
     ones = crypten.cryptensor(torch.ones(len(cell_types)))
     maxx = stacked.max(dim=0)[0]
     max_count = (maxx == stacked).sum(dim=0)
-    if max_count.sum().get_plain_text().item()  != n_clients:
+    if max_count.sum().get_plain_text().item()  != len(cell_types):
         print(max_count.get_plain_text().tolist())
         ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
         print(ties)
