@@ -24,7 +24,6 @@ def create_clients(adata, n_clients, batch_key, train_batches):
 
 def _count_cells(clients, cell_types, cell_key):
     dict_counts = {ct: [sum(c.obs[cell_key] == ct) for c in clients] for ct in cell_types}
-    print(dict_counts)
     counts = []
     for client in clients:
         counts.append([
@@ -54,32 +53,26 @@ def dominant_smpc(clients, cell_types, cell_key):
     max_idx_plain = stacked.argmax(dim=0, one_hot=False).get_plain_text().numpy()
     for client_idx, ct in zip(max_idx_plain, cell_types):
         dominant[f"client_{client_idx}"].append(ct)
-
-    print(dominant)
     # tie breaking
     ones = crypten.cryptensor(torch.ones(len(cell_types)))
     maxx = stacked.max(dim=0)[0]
     max_count = (maxx == stacked).sum(dim=0)
     if max_count.sum().get_plain_text().item() > len(cell_types):
-        print(max_count.get_plain_text().tolist())
         ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
-        print(ties)
         if type(ties) is not list:
             ties = [ties]
         tied_celltypes = [cell_types[tie] for tie in ties]
         print("Tied cell types:", tied_celltypes)
         for c in dominant.keys():
             dominant[c] = list(set(dominant[c]) - set(tied_celltypes))
-        print(dominant)
         for c in range(len(clients)):
             for tie in ties:
                 occurrence = (stacked[:c + 1, tie].sum() == maxx[tie]).get_plain_text().item()
                 tied_cell_type = cell_types[tie]
-                print(f"Client {c}, Cell Type {cell_types[tie]}, Occurrence: {occurrence}")
                 if occurrence:
                     dominant[f"client_{c}"].append(tied_cell_type)
                     break
-        print(dominant)
+
     # remove clients with no dominant cell types
     for c in list(dominant.keys()):
         if not dominant[c]:
@@ -110,13 +103,9 @@ def check_consistency(cell_types, clients, cell_key):
     plain_result = dominant_plain(clients, cell_types, cell_key)
     smpc_result = dominant_smpc(clients, cell_types, cell_key)
 
-    print("Dominant batches without SMPC:")
+    print("Dominant batches:")
     for client, types in plain_result.items():
-        print(f"{client}: {types}")
-
-    print("\nDominant batches with SMPC:")
-    for client, types in smpc_result.items():
-        print(f"{client}: {types}")
+        print(f"{client}:\n\t with SMPC: {smpc_result[client]}\n\t Centralized: {types}")
 
     if normalize_result(plain_result) != normalize_result(smpc_result):
         print("\n❌ Mismatch detected between plain and SMPC results.")
