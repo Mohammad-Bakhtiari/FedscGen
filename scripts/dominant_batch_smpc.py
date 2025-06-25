@@ -52,7 +52,8 @@ def dominant_smpc(clients, cell_types, cell_key):
     max_idx_plain = stacked.argmax(dim=0).get_plain_text().numpy()
     print(max_idx_plain)
     dominant = {f"client_{i}": [] for i in range(len(clients))}
-    for client_idx, ct_idx in zip(np.nonzero(max_idx_plain)):
+    row_indices, col_indices = np.nonzero(max_idx_plain)
+    for client_idx, ct_idx in zip(row_indices, col_indices):
         dominant[f"client_{client_idx}"].append(cell_types[ct_idx])
     return dominant
 
