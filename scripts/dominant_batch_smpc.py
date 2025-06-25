@@ -55,7 +55,7 @@ def dominant_smpc(clients, cell_types, cell_key):
     max_idx_encrypted = stacked.argmax(dim=0)  # Encrypted result
 
     # Decrypt only the final result (client assignment per cell type)
-    max_idx_plain = max_idx_encrypted.get_plain_text().tolist()
+    max_idx_plain = max_idx_encrypted.get_plain_text().flatten().tolist()
     max_idx = [int(i) for i in max_idx_plain]
 
     # Sanity check
