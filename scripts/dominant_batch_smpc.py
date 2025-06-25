@@ -58,8 +58,10 @@ def dominant_smpc(clients, cell_types, cell_key):
     ones = crypten.cryptensor(torch.ones(len(cell_types)))
     one = crypten.cryptensor(torch.tensor(1))
     maxx = stacked.max(dim=0)[0]
-    max_count = ( maxx == stacked).sum(dim=0)
+    max_count = (maxx == stacked).sum(dim=0)
+    print((max_count.get_plain_text().numpy()))
     ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().numpy()
+    print(ties)
     for c in range(len(clients)):
         for tie in ties:
             if stacked[:c, tie].sum() == one:
