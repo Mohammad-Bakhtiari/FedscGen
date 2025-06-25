@@ -68,6 +68,7 @@ def dominant_smpc(clients, cell_types, cell_key):
     for c in range(len(clients)):
         for tie in ties:
             occurrence = (stacked[:c, tie].sum() == one).get_plain_text().item()
+            import pdb; pdb.set_trace()
             print(f"Client {c}, Cell Type {cell_types[tie]}, Occurrence: {occurrence}")
             if occurrence:
                 dominant[f"client_{c}"].append(cell_types[tie])
