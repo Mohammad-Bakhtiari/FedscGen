@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # === Load Dataset Config ===
 source ./config.sh
