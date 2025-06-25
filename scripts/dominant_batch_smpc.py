@@ -57,10 +57,6 @@ def dominant_smpc(clients, cell_types, cell_key):
 
 def main(args):
     adata = anndata.read_h5ad(args.adata)
-    if args.combine:
-        adata = combine_cell_types(adata, args.remove_cell_types, args.cell_key)
-    else:
-        adata = remove_cell_types(adata, args.remove_cell_types, args.cell_key)
     for test_batches in testset_combination(args.batches, args.batch_out):
         print(f"{test_batches} as the test batches")
         train_batches = copy.deepcopy(args.batches)
