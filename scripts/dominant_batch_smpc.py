@@ -45,7 +45,7 @@ def dominant_plain(clients, cell_types, cell_key):
 
 def dominant_smpc(clients, cell_types, cell_key):
     """Return dominant batches using CrypTen for secure aggregation, preserving privacy."""
-
+    n_clients = len(clients)
     print("\n🔐 SMPC: Encrypting counts...")
     dominant = {f"client_{i}": [] for i in range(len(clients))}
     counts = _count_cells(clients, cell_types, cell_key)
@@ -61,26 +61,26 @@ def dominant_smpc(clients, cell_types, cell_key):
     ones = crypten.cryptensor(torch.ones(len(cell_types)))
     maxx = stacked.max(dim=0)[0]
     max_count = (maxx == stacked).sum(dim=0)
-    print(max_count.get_plain_text().tolist())
-
-    ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
-    print(ties)
-    if type(ties) is not list:
-        ties = [ties]
-    tied_celltypes = [cell_types[tie] for tie in ties]
-    print("Tied cell types:", tied_celltypes)
-    for c in dominant.keys():
-        dominant[c] = list(set(dominant[c]) - set(tied_celltypes))
-    print(dominant)
-    for c in range(len(clients)):
-        for tie in ties:
-            occurrence = (stacked[:c + 1, tie].sum() == maxx[tie]).get_plain_text().item()
-            tied_cell_type = cell_types[tie]
-            print(f"Client {c}, Cell Type {cell_types[tie]}, Occurrence: {occurrence}")
-            if occurrence:
-                dominant[f"client_{c}"].append(tied_cell_type)
-                break
-    print(dominant)
+    if max_count.sum().get_plain_text().item()  != n_clients:
+        print(max_count.get_plain_text().tolist())
+        ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
+        print(ties)
+        if type(ties) is not list:
+            ties = [ties]
+        tied_celltypes = [cell_types[tie] for tie in ties]
+        print("Tied cell types:", tied_celltypes)
+        for c in dominant.keys():
+            dominant[c] = list(set(dominant[c]) - set(tied_celltypes))
+        print(dominant)
+        for c in range(len(clients)):
+            for tie in ties:
+                occurrence = (stacked[:c + 1, tie].sum() == maxx[tie]).get_plain_text().item()
+                tied_cell_type = cell_types[tie]
+                print(f"Client {c}, Cell Type {cell_types[tie]}, Occurrence: {occurrence}")
+                if occurrence:
+                    dominant[f"client_{c}"].append(tied_cell_type)
+                    break
+        print(dominant)
     return dominant
 
 
