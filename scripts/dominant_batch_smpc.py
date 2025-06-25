@@ -77,27 +77,29 @@ def dominant_smpc(clients, cell_types, cell_key):
     max_idx_raw = max_idx_encrypted.get_plain_text()
     print("🔍 Argmax result (decrypted):", max_idx_raw.tolist())
 
-    # Flattening safely
+    # Fix for unexpected multi-row output (e.g., shape [2, 4])
     if max_idx_raw.ndim > 1:
-        max_idx_flat = max_idx_raw[0].tolist()
+        max_idx_flat = []
+        for col in range(max_idx_raw.shape[1]):
+            votes = max_idx_raw[:, col].tolist()
+            vote_result = max(set(votes), key=votes.count)
+            max_idx_flat.append(int(vote_result))
     else:
-        max_idx_flat = max_idx_raw.tolist()
-
-    # Final int-casted index list
-    max_idx = [int(i) for i in max_idx_flat]
+        max_idx_flat = [int(i) for i in max_idx_raw.tolist()]
 
     # Sanity check
-    if len(max_idx) != len(cell_types):
-        print(f"❌ Length mismatch! max_idx has {len(max_idx)} entries, expected {len(cell_types)} cell types.")
+    if len(max_idx_flat) != len(cell_types):
+        print(f"❌ Length mismatch! max_idx has {len(max_idx_flat)} entries, expected {len(cell_types)} cell types.")
         raise ValueError("Mismatch between argmax output and number of cell types.")
 
     print("\n🔍 SMPC DEBUG: Building dominant map from argmax results...")
     dominant = {}
-    for ct, idx in zip(cell_types, max_idx):
-        print(f"  → {ct} assigned to client_{int(idx)}")
-        dominant.setdefault(f"client_{int(idx)}", []).append(ct)
+    for ct, idx in zip(cell_types, max_idx_flat):
+        print(f"  → {ct} assigned to client_{idx}")
+        dominant.setdefault(f"client_{idx}", []).append(ct)
 
     return dominant
+
 
 
 def normalize_result(d):
