@@ -60,7 +60,7 @@ def dominant_smpc(clients, cell_types, cell_key):
     ones = crypten.cryptensor(torch.ones(len(cell_types)))
     maxx = stacked.max(dim=0)[0]
     max_count = (maxx == stacked).sum(dim=0)
-    if max_count.sum().get_plain_text().item()  != len(cell_types):
+    if max_count.sum().get_plain_text().item() > len(cell_types):
         print(max_count.get_plain_text().tolist())
         ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
         print(ties)

@@ -12,10 +12,10 @@ for DATASET in "${DATASETS[@]}"; do
 
     n_clients="2"
     batches="0,1"
-    if [ "$dataset" == "HumanPancreas" ]; then
+    if [ "$DATASET" == "HumanPancreas" ]; then
       n_clients="5"
       batches="0,1,2,3,4"
-    elif [ "$dataset" == "CellLine" ]; then
+    elif [ "$DATASET" == "CellLine" ]; then
       n_clients="3"
       batches="0,1,2"
     fi
