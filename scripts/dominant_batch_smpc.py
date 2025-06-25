@@ -74,12 +74,22 @@ def dominant_smpc(clients, cell_types, cell_key):
 
     print("\n🔍 SMPC DEBUG: Calculating argmax across clients (dim=0)...")
     max_idx_encrypted = stacked.argmax(dim=0)
-    print("🔍 Encrypted argmax result (raw):", max_idx_encrypted)
+    max_idx_raw = max_idx_encrypted.get_plain_text()
+    print("🔍 Argmax result (decrypted):", max_idx_raw.tolist())
 
-    max_idx_plain = max_idx_encrypted.get_plain_text()
-    print("🔍 Argmax result (decrypted):", max_idx_plain.tolist())
+    # Flattening safely
+    if max_idx_raw.ndim > 1:
+        max_idx_flat = max_idx_raw[0].tolist()
+    else:
+        max_idx_flat = max_idx_raw.tolist()
 
-    max_idx = np.array(max_idx_plain.tolist()).flatten().tolist()
+    # Final int-casted index list
+    max_idx = [int(i) for i in max_idx_flat]
+
+    # Sanity check
+    if len(max_idx) != len(cell_types):
+        print(f"❌ Length mismatch! max_idx has {len(max_idx)} entries, expected {len(cell_types)} cell types.")
+        raise ValueError("Mismatch between argmax output and number of cell types.")
 
     print("\n🔍 SMPC DEBUG: Building dominant map from argmax results...")
     dominant = {}
@@ -88,6 +98,7 @@ def dominant_smpc(clients, cell_types, cell_key):
         dominant.setdefault(f"client_{int(idx)}", []).append(ct)
 
     return dominant
+
 
 def normalize_result(d):
     """Sort keys and values to ensure consistent comparison."""
