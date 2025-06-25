@@ -45,18 +45,26 @@ def dominant_smpc(clients, cell_types, cell_key):
     """Return dominant batches using CrypTen for secure aggregation, preserving privacy."""
 
     print("\n🔐 SMPC: Encrypting counts...")
+    dominant = {f"client_{i}": [] for i in range(len(clients))}
     counts = _count_cells(clients, cell_types, cell_key)
     encrypted_counts = [crypten.cryptensor(c) for c in counts]
     # Stack encrypted counts across clients
     stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
-    stacked.max(dim=0)
-    import pdb; pdb.set_trace()
     max_idx_plain = stacked.argmax(dim=0, one_hot=False).get_plain_text().numpy()
-    for _ in range(10):
-        print(stacked.argmax(dim=0, one_hot=False).get_plain_text().numpy())
-    dominant = {f"client_{i}": [] for i in range(len(clients))}
     for client_idx, ct in zip(max_idx_plain, cell_types):
         dominant[f"client_{client_idx}"].append(ct)
+
+    # tie breaking
+    ones = crypten.cryptensor(torch.ones(len(cell_types)))
+    one = crypten.cryptensor(torch.tensor(1))
+    maxx = stacked.max(dim=0)[0]
+    max_count = ( maxx == stacked).sum(dim=0)
+    ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().numpy()
+    for c in range(len(clients)):
+        for tie in ties:
+            if stacked[:c, tie].sum() == one:
+                dominant[f"client_{c}"].append(cell_types[tie])
+                break
     return dominant
 
 
