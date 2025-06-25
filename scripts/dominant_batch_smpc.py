@@ -80,6 +80,10 @@ def dominant_smpc(clients, cell_types, cell_key):
                     dominant[f"client_{c}"].append(tied_cell_type)
                     break
         print(dominant)
+    # remove clients with no dominant cell types
+    for c in list(dominant.keys()):
+        if not dominant[c]:
+            del dominant[c]
     return dominant
 
 
