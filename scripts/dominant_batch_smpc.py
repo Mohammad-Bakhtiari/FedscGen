@@ -47,8 +47,6 @@ def dominant_smpc(clients, cell_types, cell_key):
     print("\n🔐 SMPC: Encrypting counts...")
     counts = _count_cells(clients, cell_types, cell_key)
     encrypted_counts = [crypten.cryptensor(c) for c in counts]
-    import pdb; pdb.set_trace()
-
     # Stack encrypted counts across clients
     stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
 
@@ -56,19 +54,10 @@ def dominant_smpc(clients, cell_types, cell_key):
     max_idx_encrypted = stacked.argmax(dim=0)  # Encrypted result
 
     # Decrypt only the final result (client assignment per cell type)
-    max_idx_plain = max_idx_encrypted.get_plain_text().flatten().tolist()
-    max_idx = [int(i) for i in max_idx_plain]
-
-    # Sanity check
-    if len(max_idx) != len(cell_types):
-        raise ValueError("Mismatch between argmax output and number of cell types.")
-
-    print("\n📊 Dominant batch assignments (SMPC result):")
-    dominant = {}
-    for ct, idx in zip(cell_types, max_idx):
-        print(f"  → {ct} assigned to client_{idx}")
-        dominant.setdefault(f"client_{idx}", []).append(ct)
-
+    max_idx_plain = max_idx_encrypted.get_plain_text().numpy()
+    dominant = {f"client_{i}": [] for i in range(len(clients))}
+    for client_idx, ct_idx in zip(np.nonzero(max_idx_plain)):
+        dominant[f"client_{client_idx}"].append(cell_types[ct_idx])
     return dominant
 
 
