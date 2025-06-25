@@ -25,6 +25,7 @@ def create_clients(adata, n_clients, batch_key, train_batches):
 def _count_cells(clients, cell_types, cell_key):
     counts = []
     for client in clients:
+        print(client.obs[cell_key].value_counts())
         counts.append([
             client[client.obs[cell_key] == ct].shape[0] if ct in client.obs[cell_key].unique() else 0
             for ct in cell_types
@@ -47,7 +48,6 @@ def dominant_smpc(clients, cell_types, cell_key):
     print("\n🔐 SMPC: Encrypting counts...")
     dominant = {f"client_{i}": [] for i in range(len(clients))}
     counts = _count_cells(clients, cell_types, cell_key)
-    print(counts)
     encrypted_counts = [crypten.cryptensor(c) for c in counts]
     # Stack encrypted counts across clients
     stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
