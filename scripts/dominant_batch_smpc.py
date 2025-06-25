@@ -33,26 +33,29 @@ def _count_cells(clients, cell_types, cell_key):
 
 def dominant_plain(clients, cell_types, cell_key):
     """Return dominant batches without using SMPC."""
-
     counts = _count_cells(clients, cell_types, cell_key)
     max_idx = np.argmax(np.array(counts), axis=0)
     dominant = {}
     for ct, idx in zip(cell_types, max_idx.tolist()):
-        dominant.setdefault(f"client_{idx}", []).append(ct)
+        dominant.setdefault(f"client_{int(idx)}", []).append(ct)
     return dominant
+
 
 
 def dominant_smpc(clients, cell_types, cell_key):
     """Return dominant batches using CrypTen for secure aggregation."""
-
     counts = _count_cells(clients, cell_types, cell_key)
     encrypted = [crypten.cryptensor(c) for c in counts]
     stacked = crypten.stack(encrypted)
     max_idx = stacked.argmax(dim=0).get_plain_text().tolist()
     dominant = {}
     for ct, idx in zip(cell_types, max_idx):
-        dominant.setdefault(f"client_{idx}", []).append(ct)
+        dominant.setdefault(f"client_{int(idx)}", []).append(ct)
     return dominant
+
+def normalize_result(d):
+    """Sort keys and values to ensure consistent comparison."""
+    return {k: sorted(v) for k, v in sorted(d.items())}
 
 
 def main(args):
@@ -70,13 +73,20 @@ def main(args):
 def check_consistency(cell_types, clients, cell_key):
     plain_result = dominant_plain(clients, cell_types, cell_key)
     smpc_result = dominant_smpc(clients, cell_types, cell_key)
+
     print("Dominant batches without SMPC:")
     for client, types in plain_result.items():
         print(f"{client}: {types}")
+
     print("\nDominant batches with SMPC:")
     for client, types in smpc_result.items():
         print(f"{client}: {types}")
-    assert plain_result == smpc_result, "Results from plain and SMPC methods should match."
+
+    if normalize_result(plain_result) != normalize_result(smpc_result):
+        print("\n❌ Mismatch detected between plain and SMPC results.")
+        print("Plain:", normalize_result(plain_result))
+        print("SMPC: ", normalize_result(smpc_result))
+        raise AssertionError("Results from plain and SMPC methods should match.")
 
 
 if __name__ == "__main__":
