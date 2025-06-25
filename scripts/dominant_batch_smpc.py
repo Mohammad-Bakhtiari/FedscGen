@@ -64,14 +64,17 @@ def dominant_smpc(clients, cell_types, cell_key):
     ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
     if type(ties) is not list:
         ties = [ties]
-    print(ties)
+    tied_celltypes = [cell_types[tie] for tie in ties]
+    for c in dominant.keys():
+        dominant[c] = list(set(dominant[c]) - set(tied_celltypes))
+    print(dominant)
     for c in range(len(clients)):
         for tie in ties:
-            occurrence = (stacked[:c, tie].sum() == one).get_plain_text().item()
-            import pdb; pdb.set_trace()
+            occurrence = (stacked[:c + 1, tie].sum() == maxx[tie]).get_plain_text().item()
+            tied_cell_type = cell_types[tie]
             print(f"Client {c}, Cell Type {cell_types[tie]}, Occurrence: {occurrence}")
             if occurrence:
-                dominant[f"client_{c}"].append(cell_types[tie])
+                dominant[f"client_{c}"].append(tied_cell_type)
                 break
     print(dominant)
     return dominant
