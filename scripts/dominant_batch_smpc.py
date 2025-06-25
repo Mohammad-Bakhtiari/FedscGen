@@ -53,7 +53,7 @@ def dominant_plain(clients, cell_types, cell_key):
 #         dominant.setdefault(f"client_{int(idx)}", []).append(ct)
 #     return dominant
 def dominant_smpc(clients, cell_types, cell_key):
-    """Return dominant batches using CrypTen for secure aggregation with debugging output."""
+    """Return dominant batches using CrypTen for secure aggregation with deterministic tie-breaking."""
 
     print("\n🔍 SMPC DEBUG: Starting _count_cells...")
     counts = _count_cells(clients, cell_types, cell_key)
@@ -72,27 +72,26 @@ def dominant_smpc(clients, cell_types, cell_key):
     stacked = crypten.stack(encrypted)
     print("🔍 Stacked shape:", stacked.size())
 
-    print("\n🔍 SMPC DEBUG: Calculating argmax across clients (dim=0)...")
-    max_idx_encrypted = stacked.argmax(dim=0)
-    max_idx_raw = max_idx_encrypted.get_plain_text()
-    print("🔍 Argmax result (decrypted):", max_idx_raw.tolist())
+    print("\n🔍 SMPC DEBUG: Decrypting stacked tensor for postprocessing...")
+    stacked_plain = stacked.get_plain_text()
+    print("🔍 Decrypted stacked tensor:")
+    print(stacked_plain.tolist())
 
-    # Fix for unexpected multi-row output (e.g., shape [2, 4])
-    if max_idx_raw.ndim > 1:
-        max_idx_flat = []
-        for col in range(max_idx_raw.shape[1]):
-            votes = max_idx_raw[:, col].tolist()
-            vote_result = max(set(votes), key=votes.count)
-            max_idx_flat.append(int(vote_result))
-    else:
-        max_idx_flat = [int(i) for i in max_idx_raw.tolist()]
+    print("\n🔍 SMPC DEBUG: Computing argmax with tie-breaking...")
+    max_per_celltype = stacked_plain.max(dim=0)[0]
+    is_max = (stacked_plain == max_per_celltype)
+
+    client_ids = torch.arange(stacked_plain.size(0)).unsqueeze(1)
+    client_votes = is_max * client_ids
+
+    max_idx_flat = [int(i) for i in client_votes.sum(dim=0).tolist()]
 
     # Sanity check
     if len(max_idx_flat) != len(cell_types):
         print(f"❌ Length mismatch! max_idx has {len(max_idx_flat)} entries, expected {len(cell_types)} cell types.")
         raise ValueError("Mismatch between argmax output and number of cell types.")
 
-    print("\n🔍 SMPC DEBUG: Building dominant map from argmax results...")
+    print("\n🔍 SMPC DEBUG: Building dominant map from final client assignments...")
     dominant = {}
     for ct, idx in zip(cell_types, max_idx_flat):
         print(f"  → {ct} assigned to client_{idx}")
