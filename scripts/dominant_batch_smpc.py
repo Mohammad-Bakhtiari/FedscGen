@@ -54,12 +54,13 @@ def dominant_smpc(clients, cell_types, cell_key):
     for client_idx, ct in zip(max_idx_plain, cell_types):
         dominant[f"client_{client_idx}"].append(ct)
 
+    print(dominant)
     # tie breaking
     ones = crypten.cryptensor(torch.ones(len(cell_types)))
     one = crypten.cryptensor(torch.tensor(1))
     maxx = stacked.max(dim=0)[0]
     max_count = (maxx == stacked).sum(dim=0)
-    print((max_count.get_plain_text().numpy()))
+
     ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
     if type(ties) is not list:
         ties = [ties]
@@ -70,6 +71,7 @@ def dominant_smpc(clients, cell_types, cell_key):
             if occurrence:
                 dominant[f"client_{c}"].append(cell_types[tie])
                 break
+    print(dominant)
     return dominant
 
 
