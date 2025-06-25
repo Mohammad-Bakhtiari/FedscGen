@@ -1,5 +1,5 @@
 """Utility script to compute dominant batches with and without CrypTen SMPC."""
-
+import __init__
 import argparse
 import anndata
 import crypten
