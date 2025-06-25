@@ -41,64 +41,35 @@ def dominant_plain(clients, cell_types, cell_key):
         dominant.setdefault(f"client_{int(idx)}", []).append(ct)
     return dominant
 
-
-
-# def dominant_smpc(clients, cell_types, cell_key):
-#     """Return dominant batches using CrypTen for secure aggregation."""
-#     counts = _count_cells(clients, cell_types, cell_key)
-#     encrypted = [crypten.cryptensor(c) for c in counts]
-#     stacked = crypten.stack(encrypted)
-#     max_idx = np.array(stacked.argmax(dim=0).get_plain_text().tolist()).flatten().tolist()
-#     dominant = {}
-#     for ct, idx in zip(cell_types, max_idx):
-#         dominant.setdefault(f"client_{int(idx)}", []).append(ct)
-#     return dominant
 def dominant_smpc(clients, cell_types, cell_key):
-    """Return dominant batches using CrypTen for secure aggregation with deterministic tie-breaking."""
+    """Return dominant batches using CrypTen for secure aggregation, preserving privacy."""
 
-    print("\n🔍 SMPC DEBUG: Starting _count_cells...")
+    print("\n🔐 SMPC: Encrypting counts...")
     counts = _count_cells(clients, cell_types, cell_key)
-    print("🔍 Plain counts per client:")
-    for i, c in enumerate(counts):
-        print(f"  client_{i}: {c}")
+    encrypted_counts = [crypten.cryptensor(c) for c in counts]
 
-    print("\n🔍 SMPC DEBUG: Encrypting counts...")
-    encrypted = [crypten.cryptensor(c) for c in counts]
+    # Stack encrypted counts across clients
+    stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
 
-    print("🔍 SMPC DEBUG: Encrypted tensors (as plaintext for debugging):")
-    for i, e in enumerate(encrypted):
-        print(f"  client_{i}: {e.get_plain_text().tolist()}")
+    print("🔐 SMPC: Performing argmax across clients (dim=0)...")
+    max_idx_encrypted = stacked.argmax(dim=0)  # Encrypted result
 
-    print("\n🔍 SMPC DEBUG: Stacking encrypted tensors...")
-    stacked = crypten.stack(encrypted)
-    print("🔍 Stacked shape:", stacked.size())
-
-    print("\n🔍 SMPC DEBUG: Decrypting stacked tensor for postprocessing...")
-    stacked_plain = stacked.get_plain_text()
-    print("🔍 Decrypted stacked tensor:")
-    print(stacked_plain.tolist())
-
-    print("\n🔍 SMPC DEBUG: Computing argmax with tie-breaking...")
-    max_per_celltype = stacked_plain.max(dim=0)[0]
-    is_max = (stacked_plain == max_per_celltype)
-
-    client_ids = torch.arange(stacked_plain.size(0)).unsqueeze(1)
-    client_votes = is_max * client_ids
-
-    max_idx_flat = [int(i) for i in client_votes.sum(dim=0).tolist()]
+    # Decrypt only the final result (client assignment per cell type)
+    max_idx_plain = max_idx_encrypted.get_plain_text().tolist()
+    max_idx = [int(i) for i in max_idx_plain]
 
     # Sanity check
-    if len(max_idx_flat) != len(cell_types):
-        print(f"❌ Length mismatch! max_idx has {len(max_idx_flat)} entries, expected {len(cell_types)} cell types.")
+    if len(max_idx) != len(cell_types):
         raise ValueError("Mismatch between argmax output and number of cell types.")
 
-    print("\n🔍 SMPC DEBUG: Building dominant map from final client assignments...")
+    print("\n📊 Dominant batch assignments (SMPC result):")
     dominant = {}
-    for ct, idx in zip(cell_types, max_idx_flat):
+    for ct, idx in zip(cell_types, max_idx):
         print(f"  → {ct} assigned to client_{idx}")
         dominant.setdefault(f"client_{idx}", []).append(ct)
 
     return dominant
+
 
 
 
