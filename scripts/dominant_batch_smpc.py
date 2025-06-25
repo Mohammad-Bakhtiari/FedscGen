@@ -5,6 +5,7 @@ import anndata
 import crypten
 import numpy as np
 import copy
+import torch
 from fedscgen.utils import (
     remove_cell_types,
     combine_cell_types,
