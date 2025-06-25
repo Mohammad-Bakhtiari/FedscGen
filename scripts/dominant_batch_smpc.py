@@ -105,7 +105,7 @@ def check_consistency(cell_types, clients, cell_key):
 
     print("Dominant batches:")
     for client, types in plain_result.items():
-        print(f"{client}:\n\t with SMPC:    {smpc_result[client]}\n\t Centralized: {types}")
+        print(f"{client}:\n\t with SMPC:   {smpc_result[client]}\n\t Centralized: {types}")
 
     if normalize_result(plain_result) != normalize_result(smpc_result):
         print("\n❌ Mismatch detected between plain and SMPC results.")
