@@ -42,15 +42,51 @@ def dominant_plain(clients, cell_types, cell_key):
 
 
 
+# def dominant_smpc(clients, cell_types, cell_key):
+#     """Return dominant batches using CrypTen for secure aggregation."""
+#     counts = _count_cells(clients, cell_types, cell_key)
+#     encrypted = [crypten.cryptensor(c) for c in counts]
+#     stacked = crypten.stack(encrypted)
+#     max_idx = np.array(stacked.argmax(dim=0).get_plain_text().tolist()).flatten().tolist()
+#     dominant = {}
+#     for ct, idx in zip(cell_types, max_idx):
+#         dominant.setdefault(f"client_{int(idx)}", []).append(ct)
+#     return dominant
 def dominant_smpc(clients, cell_types, cell_key):
-    """Return dominant batches using CrypTen for secure aggregation."""
+    """Return dominant batches using CrypTen for secure aggregation with debugging output."""
+
+    print("\n🔍 SMPC DEBUG: Starting _count_cells...")
     counts = _count_cells(clients, cell_types, cell_key)
+    print("🔍 Plain counts per client:")
+    for i, c in enumerate(counts):
+        print(f"  client_{i}: {c}")
+
+    print("\n🔍 SMPC DEBUG: Encrypting counts...")
     encrypted = [crypten.cryptensor(c) for c in counts]
+
+    print("🔍 SMPC DEBUG: Encrypted tensors (as plaintext for debugging):")
+    for i, e in enumerate(encrypted):
+        print(f"  client_{i}: {e.get_plain_text().tolist()}")
+
+    print("\n🔍 SMPC DEBUG: Stacking encrypted tensors...")
     stacked = crypten.stack(encrypted)
-    max_idx = np.array(stacked.argmax(dim=0).get_plain_text().tolist()).flatten().tolist()
+    print("🔍 Stacked shape:", stacked.size())
+
+    print("\n🔍 SMPC DEBUG: Calculating argmax across clients (dim=0)...")
+    max_idx_encrypted = stacked.argmax(dim=0)
+    print("🔍 Encrypted argmax result (raw):", max_idx_encrypted)
+
+    max_idx_plain = max_idx_encrypted.get_plain_text()
+    print("🔍 Argmax result (decrypted):", max_idx_plain.tolist())
+
+    max_idx = np.array(max_idx_plain.tolist()).flatten().tolist()
+
+    print("\n🔍 SMPC DEBUG: Building dominant map from argmax results...")
     dominant = {}
     for ct, idx in zip(cell_types, max_idx):
+        print(f"  → {ct} assigned to client_{int(idx)}")
         dominant.setdefault(f"client_{int(idx)}", []).append(ct)
+
     return dominant
 
 def normalize_result(d):
