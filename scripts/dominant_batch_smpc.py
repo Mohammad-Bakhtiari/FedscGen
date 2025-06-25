@@ -70,13 +70,13 @@ def main(args):
 def check_consistency(cell_types, clients, cell_key):
     plain_result = dominant_plain(clients, cell_types, cell_key)
     smpc_result = dominant_smpc(clients, cell_types, cell_key)
-    assert plain_result == smpc_result, "Results from plain and SMPC methods should match."
     print("Dominant batches without SMPC:")
     for client, types in plain_result.items():
         print(f"{client}: {types}")
     print("\nDominant batches with SMPC:")
     for client, types in smpc_result.items():
         print(f"{client}: {types}")
+    assert plain_result == smpc_result, "Results from plain and SMPC methods should match."
 
 
 if __name__ == "__main__":
