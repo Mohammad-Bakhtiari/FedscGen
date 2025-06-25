@@ -23,9 +23,10 @@ def create_clients(adata, n_clients, batch_key, train_batches):
 
 
 def _count_cells(clients, cell_types, cell_key):
+    dict_counts = {ct: [sum(c.obs[cell_key] == ct) for c in clients] for ct in cell_types}
+    print(dict_counts)
     counts = []
     for client in clients:
-        print(client.obs[cell_key].value_counts())
         counts.append([
             client[client.obs[cell_key] == ct].shape[0] if ct in client.obs[cell_key].unique() else 0
             for ct in cell_types
