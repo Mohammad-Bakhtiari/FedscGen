@@ -47,6 +47,7 @@ def dominant_smpc(clients, cell_types, cell_key):
     print("\n🔐 SMPC: Encrypting counts...")
     counts = _count_cells(clients, cell_types, cell_key)
     encrypted_counts = [crypten.cryptensor(c) for c in counts]
+    import pdb; pdb.set_trace()
 
     # Stack encrypted counts across clients
     stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
