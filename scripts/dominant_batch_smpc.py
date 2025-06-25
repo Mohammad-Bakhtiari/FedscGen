@@ -64,9 +64,11 @@ def dominant_smpc(clients, cell_types, cell_key):
     max_count = (maxx == stacked).sum(dim=0)
 
     ties = (max_count != ones).argmax(dim=0, one_hot=False).get_plain_text().tolist()
+    print(ties)
     if type(ties) is not list:
         ties = [ties]
     tied_celltypes = [cell_types[tie] for tie in ties]
+    print("Tied cell types:", tied_celltypes)
     for c in dominant.keys():
         dominant[c] = list(set(dominant[c]) - set(tied_celltypes))
     print(dominant)
