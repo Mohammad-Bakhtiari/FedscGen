@@ -50,6 +50,7 @@ def dominant_smpc(clients, cell_types, cell_key):
     # Stack encrypted counts across clients
     stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
     max_idx_plain = stacked.argmax(dim=0).get_plain_text().numpy()
+    import pdb; pdb.set_trace()
     print(max_idx_plain)
     dominant = {f"client_{i}": [] for i in range(len(clients))}
     row_indices, col_indices = np.nonzero(max_idx_plain)
