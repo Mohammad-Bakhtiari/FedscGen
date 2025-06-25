@@ -66,7 +66,8 @@ def dominant_smpc(clients, cell_types, cell_key):
     print(ties)
     for c in range(len(clients)):
         for tie in ties:
-            if stacked[:c, tie].sum() == one:
+            occurrence = (stacked[:c, tie].sum() == one).get_plain_text().item()
+            if occurrence:
                 dominant[f"client_{c}"].append(cell_types[tie])
                 break
     return dominant
