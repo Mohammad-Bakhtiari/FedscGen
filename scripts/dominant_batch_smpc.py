@@ -49,13 +49,11 @@ def dominant_smpc(clients, cell_types, cell_key):
     encrypted_counts = [crypten.cryptensor(c) for c in counts]
     # Stack encrypted counts across clients
     stacked = crypten.stack(encrypted_counts)  # Shape: [n_clients, n_cell_types]
-    max_idx_plain = stacked.argmax(dim=0).get_plain_text().numpy()
-    import pdb; pdb.set_trace()
+    max_idx_plain = stacked.argmax(dim=0, one_hot=False).get_plain_text().numpy()
     print(max_idx_plain)
     dominant = {f"client_{i}": [] for i in range(len(clients))}
-    row_indices, col_indices = np.nonzero(max_idx_plain)
-    for client_idx, ct_idx in zip(row_indices, col_indices):
-        dominant[f"client_{client_idx}"].append(cell_types[ct_idx])
+    for client_idx, ct in zip(max_idx_plain, cell_types):
+        dominant[f"client_{client_idx}"].append(ct)
     return dominant
 
 
